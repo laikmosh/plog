@@ -76,25 +76,27 @@ class PlogServiceProvider extends ServiceProvider
     protected function configureDatabase()
     {
         $connections = config('database.connections');
+        $dbPath = $this->rootPath . '/database';
+        $dbFile = $dbPath . '/database.sqlite';
 
         if (!isset($connections['plog'])) {
             config([
                 'database.connections.plog' => [
                     'driver' => 'sqlite',
-                    'database' => storage_path('plog/plog.sqlite'),
+                    'database' => $dbFile,
                     'prefix' => '',
                     'foreign_key_constraints' => true,
                 ]
             ]);
 
-            $dbPath = storage_path('plog');
-            if (!file_exists($dbPath)) {
-                mkdir($dbPath, 0755, true);
-            }
-
-            $dbFile = storage_path('plog/plog.sqlite');
-            if (!file_exists($dbFile)) {
-                touch($dbFile);
+            if ($this->confirm("Create SQLite database?", true)) {
+                if (!file_exists($dbPath)) {
+                    mkdir($dbPath, 0755, true);
+                }
+    
+                if (!file_exists($dbFile)) {
+                    touch($dbFile);
+                }
             }
         }
     }
