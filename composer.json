@@ -1,0 +1,47 @@
+{
+    "name": "laikmosh/plog",
+    "version": "1.0.0",
+    "description": "Advanced Laravel logging system with metadata capture, tagging, and powerful filtering",
+    "keywords": ["laravel", "logging", "debugging", "monitoring", "plog"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Laikmosh",
+            "email": "your-email@example.com"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "illuminate/support": "^10.0|^11.0|^12.0",
+        "illuminate/database": "^10.0|^11.0|^12.0",
+        "illuminate/http": "^10.0|^11.0|^12.0",
+        "livewire/livewire": "^3.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^8.0|^9.0",
+        "phpunit/phpunit": "^10.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Laikmosh\\Plog\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Laikmosh\\Plog\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Laikmosh\\Plog\\PlogServiceProvider"
+            ],
+            "aliases": {
+                "Plog": "Laikmosh\\Plog\\Facades\\Plog",
+                "Log": "Laikmosh\\Plog\\Facades\\Log"
+            }
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
