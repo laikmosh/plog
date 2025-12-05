@@ -156,21 +156,22 @@ class PlogServiceProvider extends ServiceProvider
 
     protected function configureQueueListeners()
     {
-        // When a job is dispatched, capture the current stack trace and timestamp
-        Event::listen(\Illuminate\Queue\Events\JobQueuing::class, function ($event) {
+        // Use createPayloadUsing to reliably inject context into the queue payload
+        // This bypasses issues where SerializesModels drops dynamic properties
+        \Illuminate\Support\Facades\Queue::createPayloadUsing(function ($connection, $queue, $payload) {
             $handler = app('plog.handler');
             if (method_exists($handler, 'formatStackTrace')) {
                  $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 50);
                  $cleanTrace = $handler->formatStackTrace($trace);
                  
-                 // Attach to the job payload if possible, or the job instance
-                 if ($event->job && is_object($event->job)) {
-                     $event->job->plog_context = [
+                 return [
+                     'plog_context' => [
                          'trace' => $cleanTrace,
                          'dispatched_at' => microtime(true),
-                     ];
-                 }
+                     ]
+                 ];
             }
+            return [];
         });
 
         Event::listen(JobProcessing::class, function (JobProcessing $event) {
@@ -179,21 +180,24 @@ class PlogServiceProvider extends ServiceProvider
             // Restore Request ID
             if (isset($payload['plog_request_id'])) {
                 app(RequestIdService::class)->setRequestId($payload['plog_request_id']);
+            } elseif (isset($payload['data']['command'])) {
+                 // Fallback: Check inside command if we used the old method or if it ended up there
+                 // (Though createPayloadUsing puts it at root)
             }
             
             // Restore Stack Trace Context
-            // The job instance is unserialized here, so if we attached plog_context to the object 
-            // in JobQueuing, it should be available on the job command object.
-            // Note: 'data' in payload often contains the command object.
-            $command = null;
-            try {
-                if (isset($payload['data']['command'])) {
+            // Check root of payload first (injected via createPayloadUsing)
+            if (isset($payload['plog_context'])) {
+                app('plog.handler')->setParentContext($payload['plog_context']);
+            } 
+            // Fallback for older jobs or other insertion methods
+            elseif (isset($payload['data']['command'])) {
+                try {
                     $command = unserialize($payload['data']['command']);
-                }
-            } catch (\Exception $e) {}
-
-            if ($command && isset($command->plog_context)) {
-                app('plog.handler')->setParentContext($command->plog_context);
+                    if ($command && isset($command->plog_context)) {
+                        app('plog.handler')->setParentContext($command->plog_context);
+                    }
+                } catch (\Exception $e) {}
             }
 
             app('plog.handler')->setInJobExecution(true);
@@ -210,6 +214,7 @@ class PlogServiceProvider extends ServiceProvider
         });
 
         Event::listen('queue.before', function ($event) {
+            // Keep specific queue.before logic if needed for request_id or legacy support
             $requestId = app(RequestIdService::class)->getRequestId();
             if ($requestId && isset($event['job'])) {
                 $event['job']->plog_request_id = $requestId;
