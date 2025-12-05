@@ -23,7 +23,7 @@
         </div>
 
         <div class="flex-1">
-            @livewire('plog-viewer') version 1.0.1
+            @livewire('plog-viewer') v1.0.2
         </div>
     </div>
 

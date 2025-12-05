@@ -1,6 +1,6 @@
 {
     "name": "laikmosh/plog",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "Advanced Laravel logging system with metadata capture, tagging, and powerful filtering",
     "keywords": [
         "laravel",
