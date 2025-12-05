@@ -76,9 +76,8 @@ class PlogServiceProvider extends ServiceProvider
     protected function configureDatabase()
     {
         $connections = config('database.connections');
-        $dbPath = $this->rootPath . '/database';
-        $dbFile = $dbPath . '/database.sqlite';
-
+        $dbPath = database_path('/sqlite');
+        $dbFile = database_path('/sqlite/plogs.sqlite');
         if (!isset($connections['plog'])) {
             config([
                 'database.connections.plog' => [
@@ -89,15 +88,15 @@ class PlogServiceProvider extends ServiceProvider
                 ]
             ]);
 
-            if ($this->confirm("Create SQLite database?", true)) {
-                if (!file_exists($dbPath)) {
-                    mkdir($dbPath, 0755, true);
-                }
-    
-                if (!file_exists($dbFile)) {
-                    touch($dbFile);
-                }
+            if (!file_exists($dbPath)) {
+                mkdir($dbPath, 0755, true);
             }
+
+            if (!file_exists($dbFile)) {
+                touch($dbFile);
+            }
+            // if ($this->confirm("Create SQLite database?", true)) {
+            // }
         }
     }
 

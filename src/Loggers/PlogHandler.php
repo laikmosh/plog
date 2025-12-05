@@ -21,6 +21,32 @@ class PlogHandler
 
     public function handle($level, $message, array $context = [])
     {
+        // Fail-safe: Mirror logs to standard streams (Docker logs)
+        // This ensures logs are visible even if Plog's DB storage fails
+        try {
+            $isConsole = $this->app->runningInConsole();
+            $isError = !in_array($level, ['debug', 'info', 'notice']);
+            
+            // In Console: Use STDOUT for non-errors, STDERR for errors
+            // In Web: Use STDERR for everything (standard for PHP-FPM/Docker) to avoid breaking HTTP responses
+            $stream = ($isConsole && !$isError) ? 'php://stdout' : 'php://stderr';
+            
+            // Mimic Laravel's default log format: [Date] Environment.LEVEL: Message Context
+            $timestamp = date('Y-m-d H:i:s');
+            $env = $this->app->environment();
+            $levelUpper = strtoupper($level);
+            $contextStr = !empty($context) ? json_encode($context) : '';
+            
+            $logLine = sprintf("[%s] %s.%s: %s %s\n", $timestamp, $env, $levelUpper, $message, $contextStr);
+            
+            file_put_contents($stream, $logLine, FILE_APPEND);
+        } catch (\Exception $e) {
+            // Ignore failure in fail-safe logging
+        }
+
+
+
+
         if (!config('plog.enabled', true)) {
             return;
         }
@@ -155,50 +181,28 @@ class PlogHandler
 
     protected function getRelevantStackTrace()
     {
-        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 20);
-
-        $vendorKeywords = ['vendor', 'laravel', 'illuminate', 'monolog', 'plog'];
-        $fallbackFrame = null;
+        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 50);
 
         foreach ($trace as $frame) {
             if (!isset($frame['file'])) {
                 continue;
             }
 
-            // Store the first valid frame as fallback
-            if (!$fallbackFrame) {
-                $fallbackFrame = $frame;
+            // Skip Plog's own files
+            if (basename($frame['file']) === 'PlogHandler.php' || 
+                str_contains($frame['file'], 'laikmosh/plog')) {
+                continue;
             }
 
-            $isVendor = false;
-            foreach ($vendorKeywords as $keyword) {
-                if (stripos($frame['file'], $keyword) !== false) {
-                    $isVendor = true;
-                    break;
-                }
-            }
-
-            if (!$isVendor) {
-                return [
-                    'file' => $frame['file'],
-                    'line' => $frame['line'] ?? null,
-                    'class' => $frame['class'] ?? 'root',
-                    'method' => $frame['function'] ?? 'main',
-                ];
-            }
-        }
-
-        // Fallback to the first frame found if no user code frame is available
-        if ($fallbackFrame) {
             return [
-                'file' => $fallbackFrame['file'],
-                'line' => $fallbackFrame['line'] ?? null,
-                'class' => $fallbackFrame['class'] ?? 'root',
-                'method' => $fallbackFrame['function'] ?? 'main',
+                'file' => $frame['file'],
+                'line' => $frame['line'] ?? null,
+                'class' => $frame['class'] ?? 'root',
+                'method' => $frame['function'] ?? 'main',
             ];
         }
 
-        // Ultimate fallback - this should rarely happen
+        // Fallback if everything is Plog (unlikely) or no file found
         return [
             'file' => 'unknown',
             'line' => null,
@@ -289,8 +293,7 @@ class PlogHandler
 
     protected function getCleanStackTrace()
     {
-        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 50);
-        $vendorKeywords = ['vendor', 'laravel', 'illuminate', 'monolog', 'plog'];
+        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 100);
         $cleanTrace = [];
 
         foreach ($trace as $frame) {
@@ -298,30 +301,26 @@ class PlogHandler
                 continue;
             }
 
-            // Skip vendor/framework files
-            $isVendor = false;
-            foreach ($vendorKeywords as $keyword) {
-                if (stripos($frame['file'], $keyword) !== false) {
-                    $isVendor = true;
-                    break;
-                }
+            // Only skip Plog's own internal files to keep the trace clean of the logger itself
+            // But allow everything else (including vendor/laravel) to show the full path
+            if (str_contains($frame['file'], 'src/Loggers/PlogHandler.php') || 
+                str_contains($frame['file'], 'laikmosh/plog')) {
+                continue;
             }
 
-            if (!$isVendor) {
-                $cleanFrame = [
-                    'file' => $frame['file'],
-                    'line' => $frame['line'] ?? null,
-                    'class' => $frame['class'] ?? null,
-                    'method' => $frame['function'] ?? null,
-                ];
+            $cleanFrame = [
+                'file' => $frame['file'],
+                'line' => $frame['line'] ?? null,
+                'class' => $frame['class'] ?? null,
+                'method' => $frame['function'] ?? null,
+            ];
 
-                // Make file path relative to project root if possible
-                if (isset($frame['file']) && strpos($frame['file'], base_path()) === 0) {
-                    $cleanFrame['file'] = str_replace(base_path() . '/', '', $frame['file']);
-                }
-
-                $cleanTrace[] = $cleanFrame;
+            // Make file path relative to project root if possible
+            if (isset($frame['file']) && function_exists('base_path') && strpos($frame['file'], base_path()) === 0) {
+                $cleanFrame['file'] = str_replace(base_path() . '/', '', $frame['file']);
             }
+
+            $cleanTrace[] = $cleanFrame;
         }
 
         return empty($cleanTrace) ? null : $cleanTrace;

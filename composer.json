@@ -36,11 +36,7 @@
         "laravel": {
             "providers": [
                 "Laikmosh\\Plog\\PlogServiceProvider"
-            ],
-            "aliases": {
-                "Plog": "Laikmosh\\Plog\\Facades\\Plog",
-                "Log": "Laikmosh\\Plog\\Facades\\Log"
-            }
+            ]
         }
     },
     "minimum-stability": "stable",

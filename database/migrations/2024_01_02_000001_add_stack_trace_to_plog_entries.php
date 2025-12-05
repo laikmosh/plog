@@ -8,9 +8,11 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::connection('plog')->table('plog_entries', function (Blueprint $table) {
-            $table->json('stack_trace')->nullable()->after('tags');
-        });
+        if (Schema::connection('plog')->hasTable('plog_entries') && !Schema::connection('plog')->hasColumn('plog_entries', 'stack_trace')) {
+            Schema::connection('plog')->table('plog_entries', function (Blueprint $table) {
+                $table->json('stack_trace')->nullable()->after('tags');
+            });
+        }
     }
 
     public function down()
