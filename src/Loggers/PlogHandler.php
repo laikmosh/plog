@@ -308,6 +308,12 @@ class PlogHandler
                 continue;
             }
 
+            if (str_contains($frame['file'], 'vendor/illuminate')) {
+                continue;
+            }
+
+            
+
             $cleanFrame = [
                 'file' => $frame['file'],
                 'line' => $frame['line'] ?? null,

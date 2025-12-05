@@ -12,7 +12,7 @@
 <body class="bg-gray-100 font-sans text-gray-900">
     <div class="w-full h-screen flex flex-col">
         <div class="bg-white p-4 border-b border-gray-200 flex justify-between items-center">
-            <div class="text-2xl font-bold text-blue-600">📊 Plog v1.0.2</div>
+            <div class="text-2xl font-bold text-blue-600">📊 Plog v{{ $plogVersion }}</div>
             <div class="text-gray-600 text-sm">
                 @auth
                     Logged in as: {{ Auth::user()->email }}

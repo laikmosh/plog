@@ -14,6 +14,7 @@ use Laikmosh\Plog\Services\RequestIdService;
 use Monolog\Logger;
 use Livewire\Livewire;
 use Laikmosh\Plog\Macros\LogMacros;
+use Illuminate\Support\Facades\View;
 
 class PlogServiceProvider extends ServiceProvider
 {
@@ -71,6 +72,7 @@ class PlogServiceProvider extends ServiceProvider
         $this->configureAuthorization();
         $this->configureQueueListeners();
         $this->configureLivewireComponents();
+        $this->configureViewComposer();
     }
 
     protected function configureDatabase()
@@ -197,5 +199,20 @@ class PlogServiceProvider extends ServiceProvider
                 ]);
             }
         }
+    }
+
+    protected function configureViewComposer()
+    {
+        View::composer('plog::*', function ($view) {
+            static $version;
+
+            if ($version === null) {
+                $content = file_get_contents(__DIR__.'/../composer.json');
+                $data = json_decode($content, true);
+                $version = $data['version'] ?? 'unknown';
+            }
+
+            $view->with('plogVersion', $version);
+        });
     }
 }
