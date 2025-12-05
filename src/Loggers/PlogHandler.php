@@ -308,7 +308,7 @@ class PlogHandler
                 continue;
             }
 
-            if (str_contains($frame['file'], 'vendor/illuminate')) {
+            if (str_contains($frame['file'], 'vendor/laravel')) {
                 continue;
             }
 
