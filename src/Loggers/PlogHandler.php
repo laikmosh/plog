@@ -13,10 +13,16 @@ class PlogHandler
 {
     protected $app;
     protected static $nextLogTags = [];
+    protected $inJobExecution = false;
 
     public function __construct($app)
     {
         $this->app = $app;
+    }
+
+    public function setInJobExecution(bool $status)
+    {
+        $this->inJobExecution = $status;
     }
 
     public function handle($level, $message, array $context = [])
@@ -66,6 +72,14 @@ class PlogHandler
             if (!$tags) {
                 $tags = self::$nextLogTags;
                 self::$nextLogTags = [];
+            }
+
+            // Auto-tag with 'queue' if running inside a job
+            if ($this->inJobExecution) {
+                $tags = $tags ?? [];
+                if (!in_array('queue', $tags)) {
+                    $tags[] = 'queue';
+                }
             }
 
             // Store request data if not already stored for this request ID
@@ -291,9 +305,40 @@ class PlogHandler
         return $data;
     }
 
+    protected $parentContext = null;
+
+    public function setParentContext(array $context)
+    {
+        $this->parentContext = $context;
+    }
+
     protected function getCleanStackTrace()
     {
         $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 0);
+        $cleanTrace = $this->formatStackTrace($trace);
+
+        if ($this->parentContext) {
+            $waitTime = number_format(microtime(true) - $this->parentContext['dispatched_at'], 4);
+            
+            $divider = [
+                'file' => '--------------------------------------------------',
+                'line' => "Queue Wait: {$waitTime}s",
+                'class' => 'QUEUE',
+                'method' => 'PROCESS',
+            ];
+            
+            $cleanTrace[] = $divider;
+            
+            if (!empty($this->parentContext['trace'])) {
+                $cleanTrace = array_merge($cleanTrace, $this->parentContext['trace']);
+            }
+        }
+
+        return empty($cleanTrace) ? null : $cleanTrace;
+    }
+
+    public function formatStackTrace(array $trace)
+    {
         $cleanTrace = [];
 
         foreach ($trace as $frame) {
@@ -308,11 +353,11 @@ class PlogHandler
                 continue;
             }
 
-            if (str_contains($frame['file'], 'vendor/laravel')) {
+            if (str_contains($frame['file'], 'vendor/laravel') || 
+                str_contains($frame['file'], 'vendor/illuminate') ||
+                str_contains($frame['file'], 'vendor/symfony')) {
                 continue;
             }
-
-            
 
             $cleanFrame = [
                 'file' => $frame['file'],
@@ -329,6 +374,6 @@ class PlogHandler
             $cleanTrace[] = $cleanFrame;
         }
 
-        return empty($cleanTrace) ? null : $cleanTrace;
+        return $cleanTrace;
     }
 }

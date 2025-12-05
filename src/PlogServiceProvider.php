@@ -156,12 +156,57 @@ class PlogServiceProvider extends ServiceProvider
 
     protected function configureQueueListeners()
     {
+        // When a job is dispatched, capture the current stack trace and timestamp
+        Event::listen(\Illuminate\Queue\Events\JobQueuing::class, function ($event) {
+            $handler = app('plog.handler');
+            if (method_exists($handler, 'formatStackTrace')) {
+                 $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 50);
+                 $cleanTrace = $handler->formatStackTrace($trace);
+                 
+                 // Attach to the job payload if possible, or the job instance
+                 if ($event->job && is_object($event->job)) {
+                     $event->job->plog_context = [
+                         'trace' => $cleanTrace,
+                         'dispatched_at' => microtime(true),
+                     ];
+                 }
+            }
+        });
+
         Event::listen(JobProcessing::class, function (JobProcessing $event) {
             $payload = $event->job->payload();
 
+            // Restore Request ID
             if (isset($payload['plog_request_id'])) {
                 app(RequestIdService::class)->setRequestId($payload['plog_request_id']);
             }
+            
+            // Restore Stack Trace Context
+            // The job instance is unserialized here, so if we attached plog_context to the object 
+            // in JobQueuing, it should be available on the job command object.
+            // Note: 'data' in payload often contains the command object.
+            $command = null;
+            try {
+                if (isset($payload['data']['command'])) {
+                    $command = unserialize($payload['data']['command']);
+                }
+            } catch (\Exception $e) {}
+
+            if ($command && isset($command->plog_context)) {
+                app('plog.handler')->setParentContext($command->plog_context);
+            }
+
+            app('plog.handler')->setInJobExecution(true);
+        });
+
+        Event::listen(\Illuminate\Queue\Events\JobProcessed::class, function ($event) {
+            app('plog.handler')->setInJobExecution(false);
+            app('plog.handler')->setParentContext([]); // Clear context
+        });
+
+        Event::listen(\Illuminate\Queue\Events\JobFailed::class, function ($event) {
+            app('plog.handler')->setInJobExecution(false);
+            app('plog.handler')->setParentContext([]); // Clear context
         });
 
         Event::listen('queue.before', function ($event) {
