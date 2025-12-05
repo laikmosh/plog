@@ -293,7 +293,7 @@ class PlogHandler
 
     protected function getCleanStackTrace()
     {
-        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 100);
+        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 0);
         $cleanTrace = [];
 
         foreach ($trace as $frame) {

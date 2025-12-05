@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Plog - Advanced Laravel Logging</title>
+    <title>Plog - Advanced Laravel Logging version 1.0.1</title>
     @livewireStyles
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="bg-gray-100 font-sans text-gray-900">
     <div class="w-full h-screen flex flex-col">
         <div class="bg-white p-4 border-b border-gray-200 flex justify-between items-center">
@@ -27,4 +29,5 @@
 
     @livewireScripts
 </body>
+
 </html>

@@ -1,8 +1,14 @@
 {
     "name": "laikmosh/plog",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Advanced Laravel logging system with metadata capture, tagging, and powerful filtering",
-    "keywords": ["laravel", "logging", "debugging", "monitoring", "plog"],
+    "keywords": [
+        "laravel",
+        "logging",
+        "debugging",
+        "monitoring",
+        "plog"
+    ],
     "license": "MIT",
     "authors": [
         {
@@ -15,7 +21,7 @@
         "illuminate/support": "^10.0|^11.0|^12.0",
         "illuminate/database": "^10.0|^11.0|^12.0",
         "illuminate/http": "^10.0|^11.0|^12.0",
-        "illuminate/console": "^10.0|^11.0|^12.0", 
+        "illuminate/console": "^10.0|^11.0|^12.0",
         "livewire/livewire": "^3.0"
     },
     "require-dev": {
