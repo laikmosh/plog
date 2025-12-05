@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Plog - Advanced Laravel Logging version 1.0.1</title>
+    <title>Plog - Advanced Laravel Logging</title>
     @livewireStyles
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -23,7 +23,7 @@
         </div>
 
         <div class="flex-1">
-            @livewire('plog-viewer')
+            @livewire('plog-viewer') version 1.0.1
         </div>
     </div>
 
