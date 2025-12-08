@@ -12,9 +12,11 @@ return new class extends Migration
         $table = config('plog.database.table', 'plog_entries');
 
         if (Schema::connection($connection)->hasTable($table)) {
-            Schema::connection($connection)->table($table, function (Blueprint $table) {
-                $table->float('response_time')->nullable()->after('retention_group');
-            });
+            if (!Schema::connection($connection)->hasColumn($table, 'response_time')) {
+                Schema::connection($connection)->table($table, function (Blueprint $table) {
+                    $table->float('response_time')->nullable()->after('retention_group');
+                });
+            }
         }
     }
 

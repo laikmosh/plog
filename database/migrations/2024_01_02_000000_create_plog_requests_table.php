@@ -8,8 +8,11 @@ return new class extends Migration
 {
     public function up()
     {
-        if (!Schema::connection('plog')->hasTable('plog_requests')) {
-            Schema::connection('plog')->create('plog_requests', function (Blueprint $table) {
+        $connection = config('plog.database.connection', 'plog');
+        $table = config('plog.database.requests_table', 'plog_requests');
+
+        if (!Schema::connection($connection)->hasTable($table)) {
+            Schema::connection($connection)->create($table, function (Blueprint $table) {
                 $table->id();
                 $table->string('request_id')->unique()->index();
                 $table->string('method', 10);
@@ -27,6 +30,9 @@ return new class extends Migration
 
     public function down()
     {
-        Schema::connection('plog')->dropIfExists('plog_requests');
+        $connection = config('plog.database.connection', 'plog');
+        $table = config('plog.database.requests_table', 'plog_requests');
+
+        Schema::connection($connection)->dropIfExists($table);
     }
 };

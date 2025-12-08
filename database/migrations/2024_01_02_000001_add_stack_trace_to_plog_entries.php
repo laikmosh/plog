@@ -8,8 +8,11 @@ return new class extends Migration
 {
     public function up()
     {
-        if (Schema::connection('plog')->hasTable('plog_entries') && !Schema::connection('plog')->hasColumn('plog_entries', 'stack_trace')) {
-            Schema::connection('plog')->table('plog_entries', function (Blueprint $table) {
+        $connection = config('plog.database.connection', 'plog');
+        $table = config('plog.database.table', 'plog_entries');
+
+        if (Schema::connection($connection)->hasTable($table) && !Schema::connection($connection)->hasColumn($table, 'stack_trace')) {
+            Schema::connection($connection)->table($table, function (Blueprint $table) {
                 $table->json('stack_trace')->nullable()->after('tags');
             });
         }
@@ -17,8 +20,13 @@ return new class extends Migration
 
     public function down()
     {
-        Schema::connection('plog')->table('plog_entries', function (Blueprint $table) {
-            $table->dropColumn('stack_trace');
-        });
+        $connection = config('plog.database.connection', 'plog');
+        $table = config('plog.database.table', 'plog_entries');
+
+        if (Schema::connection($connection)->hasTable($table)) {
+            Schema::connection($connection)->table($table, function (Blueprint $table) {
+                $table->dropColumn('stack_trace');
+            });
+        }
     }
 };

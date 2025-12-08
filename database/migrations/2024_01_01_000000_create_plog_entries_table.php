@@ -9,9 +9,10 @@ return new class extends Migration
     public function up()
     {
         $connection = config('plog.database.connection', 'plog');
+        $table = config('plog.database.table', 'plog_entries');
 
-        if (!Schema::connection($connection)->hasTable('plog_entries')) {
-            Schema::connection($connection)->create('plog_entries', function (Blueprint $table) {
+        if (!Schema::connection($connection)->hasTable($table)) {
+            Schema::connection($connection)->create($table, function (Blueprint $table) {
                 $table->id();
                 $table->string('level', 20)->index();
                 $table->text('message');
@@ -44,6 +45,7 @@ return new class extends Migration
     public function down()
     {
         $connection = config('plog.database.connection', 'plog');
-        Schema::connection($connection)->dropIfExists('plog_entries');
+        $table = config('plog.database.table', 'plog_entries');
+        Schema::connection($connection)->dropIfExists($table);
     }
 };
