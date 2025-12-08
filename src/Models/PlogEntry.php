@@ -27,6 +27,7 @@ class PlogEntry extends Model
         'tags',
         'stack_trace',
         'retention_group',
+        'response_time',
     ];
 
     protected $casts = [
@@ -34,6 +35,7 @@ class PlogEntry extends Model
         'tags' => 'array',
         'stack_trace' => 'array',
         'created_at' => 'datetime',
+        'response_time' => 'float',
     ];
 
     public function __construct(array $attributes = [])

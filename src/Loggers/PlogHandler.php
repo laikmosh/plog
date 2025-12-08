@@ -106,6 +106,9 @@ class PlogHandler
 
             return $entry;
         } catch (\Exception $e) {
+            // Debug failure
+            file_put_contents('php://stderr', "[Plog Failure] " . $e->getMessage() . "\n", FILE_APPEND);
+
             // Silently fail if database is not ready
             // This prevents issues during package:discover
             return null;
@@ -354,6 +357,8 @@ class PlogHandler
             }
 
             if (str_contains($frame['file'], 'vendor/laravel') || 
+                str_contains($frame['file'], 'vendor/livewire') ||
+                str_contains($frame['file'], 'vendor/barryvdh') ||
                 str_contains($frame['file'], 'vendor/illuminate') ||
                 str_contains($frame['file'], 'vendor/symfony')) {
                 continue;

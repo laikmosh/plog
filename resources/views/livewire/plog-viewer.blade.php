@@ -367,6 +367,12 @@
                             <label class="block text-xs font-medium text-gray-600">Environment</label>
                             <span class="text-sm text-gray-900">{{ $selectedEntry->environment }}</span>
                         </div>
+                        @if($selectedEntry->response_time)
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600">Response Time</label>
+                                <span class="text-sm text-gray-900 font-medium">{{ number_format($selectedEntry->response_time * 1000, 2) }} ms</span>
+                            </div>
+                        @endif
                         @if($selectedEntry->tags)
                             <div>
                                 <label class="block text-xs font-medium text-gray-600">Tags</label>
